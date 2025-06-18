@@ -30,7 +30,11 @@ export class AuthService {
 
     if (!user) {
       user = await this.prisma.user.create({
-        data: socialUser,
+        data: {
+          ...socialUser,
+          nickname: 'nickname-dsdsdsds',
+          username: 'username-dsdsdsds',
+        },
       });
     }
 

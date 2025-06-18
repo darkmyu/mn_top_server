@@ -22,4 +22,30 @@ export class AuthController {
     // generate tokens
     // redirect to frontend with tokens
   }
+
+  @Public()
+  @Get('naver')
+  @UseGuards(AuthGuard('naver'))
+  async naver() {}
+
+  @Public()
+  @Get('naver/callback')
+  @UseGuards(AuthGuard('naver'))
+  async naverCallback(@GetUser() user: User, @Res() res: Response) {
+    // generate tokens
+    // redirect to frontend with tokens
+  }
+
+  @Public()
+  @Get('kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async kakao() {}
+
+  @Public()
+  @Get('kakao/callback')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoCallback(@GetUser() user: User, @Res() res: Response) {
+    // generate tokens
+    // redirect to frontend with tokens
+  }
 }

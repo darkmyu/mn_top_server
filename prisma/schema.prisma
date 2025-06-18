@@ -21,8 +21,9 @@ enum Provider {
 
 model User {
   id           Int      @id @default(autoincrement())
-  email        String   @unique
-  username     String
+  email        String?
+  nickname     String
+  username     String   @unique
   provider     Provider @unique
   providerId   String   @unique
   profileImage String?
