@@ -1,10 +1,10 @@
-import { EnvironmentVariables } from '@/common/interface/config.interface';
+import { EnvironmentVariables } from '@/config/interface/config.interface';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
-import { OAuthUser } from './interface/auth.interface';
+import { RegisterRequestDto } from './dto/register-request.dto';
+import { OAuthUser, TokenPayload } from './interface/auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -14,30 +14,69 @@ export class AuthService {
     private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {}
 
-  async findUserById(id: number): Promise<User | null> {
+  async register(oauthUser: OAuthUser, body: RegisterRequestDto) {
+    const exists = await this.prisma.user.findFirst({
+      where: {
+        username: body.username,
+      },
+    });
+
+    if (exists) {
+      throw new ConflictException('User already exists');
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email: oauthUser.email,
+        nickname: body.nickname,
+        username: body.username,
+        provider: oauthUser.provider,
+        providerId: oauthUser.providerId,
+        profileImage: oauthUser.profileImage,
+      },
+    });
+
+    return user;
+  }
+
+  async findUserById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
-  async validateOAuthUser(socialUser: OAuthUser): Promise<User> {
-    let user = await this.prisma.user.findUnique({
+  async validateOAuthUser(oauthUser: OAuthUser) {
+    const user = await this.prisma.user.findFirst({
       where: {
-        provider: socialUser.provider,
-        providerId: socialUser.providerId,
+        provider: oauthUser.provider,
+        providerId: oauthUser.providerId,
       },
     });
 
-    if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          ...socialUser,
-          nickname: 'nickname-dsdsdsds',
-          username: 'username-dsdsdsds',
-        },
-      });
-    }
-
+    if (!user) return oauthUser;
     return user;
+  }
+
+  async generateTokens(payload: TokenPayload) {
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get('JWT_EXPIRES_IN', { infer: true }),
+      secret: this.configService.get('JWT_SECRET', { infer: true }),
+    });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN', { infer: true }),
+      secret: this.configService.get('JWT_REFRESH_SECRET', { infer: true }),
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  async generateRegisterToken(payload: OAuthUser) {
+    const registerToken = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get('JWT_REGISTER_EXPIRES_IN', { infer: true }),
+      secret: this.configService.get('JWT_REGISTER_SECRET', { infer: true }),
+    });
+
+    return registerToken;
   }
 }

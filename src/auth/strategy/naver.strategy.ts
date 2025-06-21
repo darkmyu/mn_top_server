@@ -1,4 +1,4 @@
-import { EnvironmentVariables } from '@/common/interface/config.interface';
+import { EnvironmentVariables } from '@/config/interface/config.interface';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';

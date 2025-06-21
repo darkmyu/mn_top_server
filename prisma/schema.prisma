@@ -24,8 +24,8 @@ model User {
   email        String?
   nickname     String
   username     String   @unique
-  provider     Provider @unique
-  providerId   String   @unique
+  provider     Provider
+  providerId   String
   profileImage String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

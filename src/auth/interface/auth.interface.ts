@@ -7,8 +7,7 @@ export interface OAuthUser {
   profileImage?: string;
 }
 
-export interface JwtPayload {
-  sub: number;
-  email: string;
+export interface TokenPayload {
+  id: number;
   username: string;
 }

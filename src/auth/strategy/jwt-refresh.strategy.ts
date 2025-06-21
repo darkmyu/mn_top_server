@@ -1,10 +1,11 @@
 import { AuthService } from '@/auth/auth.service';
-import { EnvironmentVariables } from '@/common/interface/config.interface';
+import { EnvironmentVariables } from '@/config/interface/config.interface';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtPayload } from '../interface/auth.interface';
+import { TokenPayload } from '../interface/auth.interface';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -13,14 +14,19 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req: Request) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return req?.cookies?.['refresh_token'];
+        },
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_REFRESH_SECRET', { infer: true }),
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.authService.findUserById(payload.sub);
+  async validate(payload: TokenPayload) {
+    const user = await this.authService.findUserById(payload.id);
 
     if (!user) {
       throw new UnauthorizedException('User not found');
